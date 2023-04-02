@@ -232,3 +232,103 @@ SELECT HomeTown
 FROM RegularUser;
 ```
 
+## Built-in Functions ##
+
+Continuing our discussion about practical functionality in commercial databases, let's consider some built-in functions, such as ```count```, ```sum```, ```avg```, `min`, and `max`.
+
+Suppose we want to count the number of regular users. We can use the `count` built-in to retrieve the number of rows in `RegularUser`:
+
+```sql
+SELECT count(*)
+FROM RegularUser;
+```
+
+Suppose we want to select the email and birth year for the youngest female regular user. Since the youngest users have the "largest" birth years, we can use the max built-in like so:
+
+```sql
+SELECT Email, max(BirthdaYear)
+FROM RegularUser
+WHERE Sex = 'F';
+```
+
+## Group by ##
+Sometimes, we want to group the data that comes back from a query and apply some simple calculations within each group. For example, suppose we wish to group user interests by user email. For each group, we want to return the corresponding email, the number of interests the user has, and the user's average "since age". 
+![Image](https://assets.omscs.io/notes/20221025094034.png)
+
+```sql
+SELECT Email, count(*), AS NumInt, avg(SinceAge) AvgAge
+FROM UserInterests
+GROUP BY Email
+ORDER BY NumInt ASC;
+```
+ ## Having - Condition on the Group ##
+
+ Suppose we want to group user interests by user email. For each group, we want to return the corresponding email, the number of interests the user has, and the user's average "since age". Furthermore, we want to sort the result by the number of interests ascending. This time, we want only to return the groups with more than one interest. We can accomplish this with a `HAVING` clause:
+
+```sql
+SELECT Email, count(*), AS NumInt, avg(SinceAge) AvgAge
+FROM UserInterests
+GROUP BY Email
+HAVING NumInt > 1
+ORDER BY NumInt ASC;
+```
+
+## Nested Queries - IN/NOT IN ##
+The final SQL concept we will explore is **nested queries**.
+
+Let's start by retrieving the email and interests of all regular users in Atlanta:
+
+```sql
+SELECT Email, Interest
+FROM UserInterests
+WHERE Email IN (
+  SELECT Email
+  FROM RegularUser
+  WHERE HomeTown = 'Atlanta'
+);
+```
+OR by using Join, the alternative way to express this query without nested queries is by joining UserInterests on RegularUser and selecting the appropriate rows:
+
+```sql
+SELECT U.Email, Interest
+FROM UserInterests I, RegularUser U
+WHERE I.Email = U.Email AND
+HomeTown = 'Atlanta';
+```
+
+## Nested Queries - Comparisons, SOME/ALL ##
+
+Let's find current cities with at least one regular user with a salary higher than all salaries of regular users from **Austin**.
+
+```sql
+SELECT CurrentCity
+FROM RegularUser R, YearSalary Y
+WHERE R.BirthYear = Y.BirthYear AND Salary > ALL
+(SELECT Salary
+FROM RegularUser R, YearSalary Y
+WHERE R.BirthYear = Y.BirthYear AND HomeTown = 'Austin'
+)
+```
+
+Alternatively, we don't actually need to ensure that each considered salary is greater than all the salaries of users from Austin; we only need to ensure that it's greater than the maximum of those salaries.
+
+```sql
+SELECT CurrentCity
+FROM RegularUser R, YearSalary Y
+WHERE R.BirthYear = Y.BirthYear AND Salary >
+(SELECT max(Salary)
+FROM RegularUser R, YearSalary Y
+WHERE R.BirthYear = Y.BirthYear AND HomeTown = 'Austin'
+)
+```
+
+## Nested Queries - Correlated ##
+The last type of nested query we will examine is correlated queries. Suppose we want to find the email and birth year of regular users who have **no interests**:
+
+```sql
+SELECT R.Email, BirthYear
+FROM RegularUser R
+WHERE NOT EXIST
+  (SELECT *
+  FROM UserInterests U
+  WHERE U.Email = R.Email)
