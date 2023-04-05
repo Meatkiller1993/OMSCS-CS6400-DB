@@ -1,3 +1,4 @@
+# EXAM2 NOTES
 # SQL 
 
 ## SQL History
