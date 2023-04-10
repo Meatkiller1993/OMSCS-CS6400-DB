@@ -36,7 +36,7 @@ WHERE Email = 'sihai@gmail.com'
 ```
 
 ## General SQL Query Syntax
-Generally, SQL queries looks like the following format:
+Generally, SQL queries look like the following format:
 ```sql
 SELECT column1, column2, column3
 FROM table1, table2, table3
